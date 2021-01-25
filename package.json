@@ -1,0 +1,30 @@
+{
+  "name": "ghostscript-node",
+  "version": "1.0.0",
+  "description": "A Node.js library which can work with PDFs, based on Ghostscript.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sigalor/ghostscript-node.git"
+  },
+  "keywords": [
+    "pdf",
+    "ghostscript"
+  ],
+  "author": "sigalor",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sigalor/ghostscript-node/issues"
+  },
+  "homepage": "https://github.com/sigalor/ghostscript-node#readme",
+  "dependencies": {
+    "fs-extra": "^9.1.0",
+    "tempy": "^1.0.0"
+  },
+  "devDependencies": {
+    "jest": "^26.6.3"
+  }
+}
