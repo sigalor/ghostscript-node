@@ -4,27 +4,65 @@ const tempy = require('tempy');
 const util = require('util');
 const exec = util.promisify(childProcess.exec);
 
+async function useTempFiles(filenameSets, fn) {
+  const filenames = {};
+
+  // create all desired temporary files (either empty files or write data buffers to them)
+  for (const [k, config] of Object.entries(filenameSets)) {
+    const { numFiles, writeBuffers, ...tempyConfig } = config;
+
+    if (numFiles !== undefined) {
+      filenames[k] = Array(numFiles)
+        .fill(0)
+        .map(() => tempy.file(tempyConfig));
+    } else if (writeBuffers !== undefined) {
+      filenames[k] = await Promise.all(writeBuffers.map(b => tempy.write(b, tempyConfig)));
+    }
+  }
+
+  // execute the worker function which uses these files
+  const ret = await fn(filenames);
+
+  // remove all the temporary files again
+  await Promise.all([].concat(...Object.values(filenames)).map(f => fs.unlink(f)));
+
+  // return the result of the worker function
+  return ret;
+}
+
+async function useTempFilesPDF(filenameSets, fn) {
+  Object.values(filenameSets).forEach(v => (v.extension = '.pdf'));
+  return useTempFiles(filenameSets, fn);
+}
+
+// writes inputBuffer to one temporary file and creates an empty output file
+async function useTempFilesPDFInOut(inputBuffer, fn) {
+  return useTempFilesPDF(
+    { input: { writeBuffers: [inputBuffer] }, output: { numFiles: 1 } },
+    async ({ input, output }) => fn(input[0], output[0]),
+  );
+}
+
+async function useTempFilesPDFIn(inputBuffer, fn) {
+  return useTempFilesPDF({ input: { writeBuffers: [inputBuffer] } }, async ({ input }) => fn(input[0]));
+}
+
 async function combinePDFs(pdfBuffers) {
   if (pdfBuffers.length === 0) return Buffer.alloc(0);
   if (pdfBuffers.length === 1) return pdfBuffers[0];
 
   try {
-    // write all buffers to temporary files
-    const outputFilename = tempy.file({ extension: '.pdf' });
-    const pdfFilenames = await Promise.all(pdfBuffers.map(b => tempy.write(b, { extension: '.pdf' })));
-
-    // also wipe "Ghostscript" from meta data (see https://unix.stackexchange.com/a/491435 )
-    await exec(
-      `gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=${outputFilename} -dBATCH ${pdfFilenames.join(
-        ' ',
-      )} -c "[ /Creator () /Producer () /DOCINFO pdfmark"`,
+    return await useTempFilesPDF(
+      { inputs: { writeBuffers: pdfBuffers }, output: { numFiles: 1 } },
+      async ({ inputs, output }) => {
+        await exec(
+          `gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=${output[0]} -dBATCH ${inputs.join(
+            ' ',
+          )} -c "[ /Creator () /Producer () /DOCINFO pdfmark"`,
+        );
+        return await fs.readFile(output[0]);
+      },
     );
-
-    // remove all the temporary files again
-    const ret = await fs.readFile(outputFilename);
-    await Promise.all([fs.unlink(outputFilename), ...pdfFilenames.map(f => fs.unlink(f))]);
-
-    return ret;
   } catch (e) {
     throw new Error('Failed to combine PDFs: ' + e.message);
   }
@@ -32,11 +70,12 @@ async function combinePDFs(pdfBuffers) {
 
 async function countPDFPages(pdfBuffer) {
   try {
-    const filename = await tempy.write(pdfBuffer, { extension: '.pdf' });
-    const { stdout } = await exec(
-      `gs -q -dNOPAUSE -dBATCH -dNOSAFER -dNODISPLAY -c "(${filename}) (r) file runpdfbegin pdfpagecount = quit"`,
-    );
-    return parseInt(stdout);
+    return await useTempFilesPDFIn(pdfBuffer, async input => {
+      const { stdout } = await exec(
+        `gs -q -dNOPAUSE -dBATCH -dNOSAFER -dNODISPLAY -c "(${input}) (r) file runpdfbegin pdfpagecount = quit"`,
+      );
+      return parseInt(stdout);
+    });
   } catch (e) {
     throw new Error('Failed to determine number of pages in PDF: ' + e.message);
   }
@@ -44,18 +83,12 @@ async function countPDFPages(pdfBuffer) {
 
 async function extractPDFPages(pdfBuffer, firstPage, lastPage) {
   try {
-    const outputFilename = tempy.file({ extension: '.pdf' });
-    const inputFilename = await tempy.write(pdfBuffer, { extension: '.pdf' });
-
-    await exec(
-      `gs -q -dNOPAUSE -sDEVICE=pdfwrite -dBATCH -dNOSAFER -dFirstPage=${firstPage} -dLastPage=${lastPage} -sOutputFile=${outputFilename} ${inputFilename}`,
-    );
-
-    const ret = await fs.readFile(outputFilename);
-    await fs.unlink(outputFilename);
-    await fs.unlink(inputFilename);
-
-    return ret;
+    return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
+      await exec(
+        `gs -q -dNOPAUSE -sDEVICE=pdfwrite -dBATCH -dNOSAFER -dFirstPage=${firstPage} -dLastPage=${lastPage} -sOutputFile=${output} ${input}`,
+      );
+      return await fs.readFile(output);
+    });
   } catch (e) {
     throw new Error('Failed to extract PDF pages: ' + e.message);
   }
