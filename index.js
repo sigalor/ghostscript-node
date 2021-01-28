@@ -35,11 +35,14 @@ async function useTempFilesPDF(filenameSets, fn) {
   return useTempFiles(filenameSets, fn);
 }
 
-// writes inputBuffer to one temporary file and creates an empty output file
+// writes inputBuffer to one temporary file, creates an empty output file and eventually returns output
 async function useTempFilesPDFInOut(inputBuffer, fn) {
   return useTempFilesPDF(
     { input: { writeBuffers: [inputBuffer] }, output: { numFiles: 1 } },
-    async ({ input, output }) => fn(input[0], output[0]),
+    async ({ input, output }) => {
+      await fn(input[0], output[0]);
+      return await fs.readFile(output[0]);
+    },
   );
 }
 
@@ -87,15 +90,25 @@ async function extractPDFPages(pdfBuffer, firstPage, lastPage) {
       await exec(
         `gs -q -dNOPAUSE -sDEVICE=pdfwrite -dBATCH -dNOSAFER -dFirstPage=${firstPage} -dLastPage=${lastPage} -sOutputFile=${output} ${input}`,
       );
-      return await fs.readFile(output);
     });
   } catch (e) {
     throw new Error('Failed to extract PDF pages: ' + e.message);
   }
 }
 
+async function rotatePDF(pdfBuffer, direction) {
+  if (!['east', 'south', 'west'].includes(direction)) throw new Error('Invalid rotation direction: ' + direction);
+
+  try {
+    return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
+      await exec(`pdftk ${input} cat 1-end${direction} output ${output}`);
+    });
+  } catch (e) {}
+}
+
 module.exports = {
   combinePDFs,
   countPDFPages,
   extractPDFPages,
+  rotatePDF,
 };

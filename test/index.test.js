@@ -29,3 +29,8 @@ test('extractPDFPages', async () => {
   const res = await gs.extractPDFPages(pdfFiles[1], 2, 3);
   await expect(gs.countPDFPages(res)).resolves.toBe(2);
 });
+
+test('rotatePDF', async () => {
+  const res = await gs.rotatePDF(pdfFiles[1], 'east');
+  await expect(gs.countPDFPages(res)).resolves.toBe(3);
+});
