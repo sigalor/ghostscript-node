@@ -4,11 +4,11 @@
 
 ## Introduction
 
-A fully promise-based Node.js library which can work with PDFs, based on Ghostscript and PDFtk.
+A fully promise-based Node.js library which can work with PDFs, based on Ghostscript and qpdf.
 
 All PDF files that are handled by this library in the form of `Buffer` objects, i.e. to a user of this library, it looks like everything works only in memory. In the background though, file system access (via [tempy](https://www.npmjs.com/package/tempy)) is needed.
 
-Additionally, this library requires the `gs` command (Ghostscript) as well as `pdftk` to be available.
+Additionally, this library requires the `gs` command (Ghostscript) as well as `qpdf` to be available.
 
 ## Getting started
 
@@ -36,6 +36,6 @@ const gs = require("ghostscript-node");
   const partOfPDF1 = await gs.extractPDFPages(pdf1, 3, 5);
 
   // rotate all pages of pdf1 by 90 degrees clockwise
-  const rotatedPDF = await gs.rotatePDF(pdf1, "east");
+  const rotatedPDF = await gs.rotatePDF(pdf1, "90");
 })();
 ```

@@ -31,6 +31,6 @@ test('extractPDFPages', async () => {
 });
 
 test('rotatePDF', async () => {
-  const res = await gs.rotatePDF(pdfFiles[1], 'east');
+  const res = await gs.rotatePDF(pdfFiles[1], '90');
   await expect(gs.countPDFPages(res)).resolves.toBe(3);
 });

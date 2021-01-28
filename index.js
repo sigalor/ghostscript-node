@@ -97,11 +97,11 @@ async function extractPDFPages(pdfBuffer, firstPage, lastPage) {
 }
 
 async function rotatePDF(pdfBuffer, direction) {
-  if (!['east', 'south', 'west'].includes(direction)) throw new Error('Invalid rotation direction: ' + direction);
+  if (!['90', '180', '270'].includes(direction)) throw new Error('Invalid rotation direction: ' + direction);
 
   try {
     return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
-      await exec(`pdftk ${input} cat 1-end${direction} output ${output}`);
+      await exec(`qpdf ${input} ${output} --rotate=${direction}`);
     });
   } catch (e) {}
 }
