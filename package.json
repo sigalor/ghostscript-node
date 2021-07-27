@@ -1,6 +1,6 @@
 {
   "name": "ghostscript-node",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "A Node.js library which can work with PDFs, based on Ghostscript.",
   "main": "index.js",
   "scripts": {
@@ -21,10 +21,10 @@
   },
   "homepage": "https://github.com/sigalor/ghostscript-node#readme",
   "dependencies": {
-    "fs-extra": "^9.1.0",
-    "tempy": "^1.0.0"
+    "fs-extra": "^10.0.0",
+    "tempy": "^1.0.1"
   },
   "devDependencies": {
-    "jest": "^26.6.3"
+    "jest": "^27.0.6"
   }
 }

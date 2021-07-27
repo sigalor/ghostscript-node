@@ -1,3 +1,7 @@
+# 1.2.0 (2021-07-27)
+
+- added `renderPDFPagesToPNG` function
+
 # 1.1.2 (2021-01-28)
 
 - use qpdf instead of PDFtk for rotating PDFs
