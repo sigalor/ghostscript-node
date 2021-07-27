@@ -103,7 +103,53 @@ async function rotatePDF(pdfBuffer, direction) {
     return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
       await exec(`qpdf ${input} ${output} --rotate=${direction}`);
     });
-  } catch (e) {}
+  } catch (e) {
+    throw new Error('Failed to rotate PDF: ' + e.message);
+  }
+}
+
+/**
+ * If `firstPage` is not given, 1 is used.
+ * If `lastPage` is not given, the document's last page is used.
+ * If `firstPage` is negative (e.g. -n), this refers to the last n pages and `lastPage` must be undefined.
+ * All page numbers start at 1.
+ */
+async function renderPDFPagesToPNG(pdfBuffer, firstPage, lastPage, resolution = 300) {
+  const numPages = await countPDFPages(pdfBuffer);
+
+  if (firstPage === undefined) firstPage = 1;
+  else if (firstPage === 0 || (firstPage < 0 && firstPage < -numPages))
+    throw new Error('First page number out of range: ' + firstPage);
+
+  if (firstPage < 0) {
+    if (lastPage !== undefined) throw new Error('Last page must be undefined when first page is negative');
+    firstPage = numPages + firstPage + 1;
+    lastPage = numPages;
+  }
+
+  if (lastPage === undefined) lastPage = numPages;
+  else if (lastPage > numPages) throw new Error('Last page number out of range: ' + lastPage);
+
+  if (firstPage > lastPage) throw new Error('Invalid page range: ' + firstPage + '-' + lastPage);
+
+  try {
+    return await useTempFilesPDFIn(pdfBuffer, async input => {
+      const outDir = tempy.directory();
+      await exec(
+        `gs -q -dQUIET -dSAFER -dBATCH -dNOPAUSE -dNOPROMPT -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r${resolution} -sOutputFile=${outDir}/%d.png -dFirstPage=${firstPage} -dLastPage=${lastPage} ${input}`,
+      );
+
+      const outFiles = [];
+      for (let i = 1; i <= lastPage - firstPage + 1; i++) {
+        outFiles.push(await fs.readFile(outDir + '/' + i + '.png'));
+      }
+
+      await fs.rmdir(outDir, { recursive: true });
+      return outFiles;
+    });
+  } catch (e) {
+    throw new Error('Failed to render PDF pages to PNG: ' + e.message);
+  }
 }
 
 module.exports = {
@@ -111,4 +157,5 @@ module.exports = {
   countPDFPages,
   extractPDFPages,
   rotatePDF,
+  renderPDFPagesToPNG,
 };
