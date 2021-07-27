@@ -37,5 +37,8 @@ const gs = require("ghostscript-node");
 
   // rotate all pages of pdf1 by 90 degrees clockwise
   const rotatedPDF = await gs.rotatePDF(pdf1, "90");
+
+  // returns an array of buffers containing PNG images of the desired pages
+  const renderedPages = await gs.renderPDFPagesToPNG(pdf1);
 })();
 ```
