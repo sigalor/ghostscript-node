@@ -9,4 +9,5 @@ declare module 'ghostscript-node' {
     lastPage?: number,
     resolution?: number,
   ): Promise<Buffer[]>;
+  export function isValidPDF(pdfBuffer: Buffer): Promise<boolean>;
 }

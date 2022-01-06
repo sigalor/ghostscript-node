@@ -1,3 +1,7 @@
+# 1.3.0 (2022-01-06)
+
+- added `isValidPDF` function
+
 # 1.2.0 (2021-07-27)
 
 - added `renderPDFPagesToPNG` function

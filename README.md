@@ -40,5 +40,8 @@ const gs = require("ghostscript-node");
 
   // returns an array of buffers containing PNG images of the desired pages
   const renderedPages = await gs.renderPDFPagesToPNG(pdf1);
+
+  // checks if pdf1 is a valid PDF file
+  const isPDF1Valid = await gs.isValidPDF(pdf1);
 })();
 ```

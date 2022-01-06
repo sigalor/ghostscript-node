@@ -84,3 +84,13 @@ describe('renderPDFPagesToPNG', () => {
     );
   });
 });
+
+describe('isValidPDF', () => {
+  test('returns true for valid PDF', async () => {
+    expect(await gs.isValidPDF(pdfFiles[0])).toBe(true);
+  });
+
+  test('returns false for invalid PDF', async () => {
+    expect(await gs.isValidPDF(Buffer.from([1, 2, 3]))).toBe(false);
+  });
+});

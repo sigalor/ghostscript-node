@@ -152,10 +152,20 @@ async function renderPDFPagesToPNG(pdfBuffer, firstPage, lastPage, resolution = 
   }
 }
 
+async function isValidPDF(pdfBuffer) {
+  try {
+    await countPDFPages(pdfBuffer);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 module.exports = {
   combinePDFs,
   countPDFPages,
   extractPDFPages,
   rotatePDF,
   renderPDFPagesToPNG,
+  isValidPDF,
 };
