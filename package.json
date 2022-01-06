@@ -1,6 +1,6 @@
 {
   "name": "ghostscript-node",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A Node.js library which can work with PDFs, based on Ghostscript.",
   "main": "index.js",
   "scripts": {
