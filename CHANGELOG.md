@@ -1,3 +1,8 @@
+# 1.3.1 (2022-01-24)
+
+- fix handling of rotated PDFs
+- improve internal structure of unit tests
+
 # 1.3.0 (2022-01-06)
 
 - added `isValidPDF` function
