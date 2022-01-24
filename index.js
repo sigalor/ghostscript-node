@@ -59,7 +59,7 @@ async function combinePDFs(pdfBuffers) {
       { inputs: { writeBuffers: pdfBuffers }, output: { numFiles: 1 } },
       async ({ inputs, output }) => {
         await exec(
-          `gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=${output[0]} -dBATCH ${inputs.join(
+          `gs -q -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=${output[0]} -dBATCH -dAutoRotatePages=/None ${inputs.join(
             ' ',
           )} -c "[ /Creator () /Producer () /DOCINFO pdfmark"`,
         );
@@ -88,7 +88,7 @@ async function extractPDFPages(pdfBuffer, firstPage, lastPage) {
   try {
     return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
       await exec(
-        `gs -q -dNOPAUSE -sDEVICE=pdfwrite -dBATCH -dNOSAFER -dFirstPage=${firstPage} -dLastPage=${lastPage} -sOutputFile=${output} ${input}`,
+        `gs -q -dNOPAUSE -sDEVICE=pdfwrite -dBATCH -dNOSAFER -dFirstPage=${firstPage} -dLastPage=${lastPage} -dAutoRotatePages=/None -sOutputFile=${output} ${input}`,
       );
     });
   } catch (e) {
