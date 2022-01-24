@@ -1,25 +1,23 @@
 const fs = require('fs-extra');
-const path = require('path');
 const gs = require('..');
+const getFiles = require('./files');
 
-const pdfFiles = [];
-
-beforeAll(() => {
-  pdfFiles.push(fs.readFileSync(path.join(__dirname, 'pdf1.pdf')));
-  pdfFiles.push(fs.readFileSync(path.join(__dirname, 'pdf2.pdf')));
+let files;
+beforeAll(async () => {
+  files = await getFiles();
 });
 
 describe('combinePDFs', () => {
   test('works', async () => {
-    const res = await gs.combinePDFs(pdfFiles);
+    const res = await gs.combinePDFs([files['pdf1.pdf'], files['pdf2.pdf']]);
     await expect(gs.countPDFPages(res)).resolves.toBe(4);
   });
 });
 
 describe('countPDFPages', () => {
   test('works', async () => {
-    await expect(gs.countPDFPages(pdfFiles[0])).resolves.toBe(1);
-    await expect(gs.countPDFPages(pdfFiles[1])).resolves.toBe(3);
+    await expect(gs.countPDFPages(files['pdf1.pdf'])).resolves.toBe(1);
+    await expect(gs.countPDFPages(files['pdf2.pdf'])).resolves.toBe(3);
   });
 
   test('fails for invalid PDF', async () => {
@@ -31,49 +29,51 @@ describe('countPDFPages', () => {
 
 describe('extractPDFPages', () => {
   test('works', async () => {
-    const res = await gs.extractPDFPages(pdfFiles[1], 2, 3);
+    const res = await gs.extractPDFPages(files['pdf2.pdf'], 2, 3);
     await expect(gs.countPDFPages(res)).resolves.toBe(2);
   });
 });
 
 describe('rotatePDF', () => {
   test('works', async () => {
-    const res = await gs.rotatePDF(pdfFiles[1], '90');
+    const res = await gs.rotatePDF(files['pdf2.pdf'], '90');
     await expect(gs.countPDFPages(res)).resolves.toBe(3);
   });
 });
 
 describe('renderPDFPagesToPNG', () => {
   test('works for single page PDF', async () => {
-    const res = await gs.renderPDFPagesToPNG(pdfFiles[0]);
+    const res = await gs.renderPDFPagesToPNG(files['pdf1.pdf']);
     expect(res.length).toBe(1);
   });
 
   test('works for three page PDF', async () => {
-    const res = await gs.renderPDFPagesToPNG(pdfFiles[1]);
+    const res = await gs.renderPDFPagesToPNG(files['pdf2.pdf']);
     expect(res.length).toBe(3);
   });
 
   test('works for second page of a PDF', async () => {
-    const res = await gs.renderPDFPagesToPNG(pdfFiles[1], 2, 2);
+    const res = await gs.renderPDFPagesToPNG(files['pdf2.pdf'], 2, 2);
     expect(res.length).toBe(1);
   });
 
   test('works for the last two pages of a PDF', async () => {
-    const res = await gs.renderPDFPagesToPNG(pdfFiles[1], -2);
+    const res = await gs.renderPDFPagesToPNG(files['pdf2.pdf'], -2);
     expect(res.length).toBe(2);
   });
 
   test('fails when first page is 0', async () => {
-    await expect(gs.renderPDFPagesToPNG(pdfFiles[0], 0)).rejects.toThrow('First page number out of range: 0');
+    await expect(gs.renderPDFPagesToPNG(files['pdf1.pdf'], 0)).rejects.toThrow('First page number out of range: 0');
   });
 
   test('fails when last page is out of range', async () => {
-    await expect(gs.renderPDFPagesToPNG(pdfFiles[0], undefined, 3)).rejects.toThrow('Last page number out of range: 3');
+    await expect(gs.renderPDFPagesToPNG(files['pdf1.pdf'], undefined, 3)).rejects.toThrow(
+      'Last page number out of range: 3',
+    );
   });
 
   test('fails when last page number is given when first page number is negative', async () => {
-    await expect(gs.renderPDFPagesToPNG(pdfFiles[0], -1, 2)).rejects.toThrow(
+    await expect(gs.renderPDFPagesToPNG(files['pdf1.pdf'], -1, 2)).rejects.toThrow(
       'Last page must be undefined when first page is negative',
     );
   });
@@ -83,11 +83,17 @@ describe('renderPDFPagesToPNG', () => {
       /^Failed to determine number of pages in PDF: Command failed/,
     );
   });
+
+  test('correctly renders rotated PDF', async () => {
+    const rotatedPdf = await gs.rotatePDF(files['pdf1.pdf'], '90');
+    const png = (await gs.renderPDFPagesToPNG(rotatedPdf))[0];
+    expect(png.toString('base64')).toBe(files['renderPDFPagesToPNG-rotated-output.png'].toString('base64'));
+  });
 });
 
 describe('isValidPDF', () => {
   test('returns true for valid PDF', async () => {
-    expect(await gs.isValidPDF(pdfFiles[0])).toBe(true);
+    expect(await gs.isValidPDF(files['pdf1.pdf'])).toBe(true);
   });
 
   test('returns false for invalid PDF', async () => {
