@@ -41,7 +41,7 @@ async function useTempFilesPDFInOut(inputBuffer, fn) {
     { input: { writeBuffers: [inputBuffer] }, output: { numFiles: 1 } },
     async ({ input, output }) => {
       await fn(input[0], output[0]);
-      return await fs.readFile(output[0]);
+      return fs.readFile(output[0]);
     },
   );
 }
@@ -63,7 +63,7 @@ async function combinePDFs(pdfBuffers) {
             ' ',
           )} -c "[ /Creator () /Producer () /DOCINFO pdfmark"`,
         );
-        return await fs.readFile(output[0]);
+        return fs.readFile(output[0]);
       },
     );
   } catch (e) {
@@ -74,8 +74,9 @@ async function combinePDFs(pdfBuffers) {
 async function countPDFPages(pdfBuffer) {
   try {
     return await useTempFilesPDFIn(pdfBuffer, async input => {
+      const escapedInput = input.replace(/\\/g, '\\\\')
       const { stdout } = await exec(
-        `gs -q -dNOPAUSE -dBATCH -dNOSAFER -dNODISPLAY -c "(${input}) (r) file runpdfbegin pdfpagecount = quit"`,
+        `gs -q -dNOPAUSE -dBATCH -dNOSAFER -dNODISPLAY -c "(${escapedInput}) (r) file runpdfbegin pdfpagecount = quit"`,
       );
       return parseInt(stdout);
     });
