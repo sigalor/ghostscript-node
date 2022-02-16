@@ -1,3 +1,7 @@
+# 1.3.2 (2022-02-16)
+
+- escape input in countPDFPages for Windows, fix redundant await (Loupi) [#2](https://github.com/sigalor/ghostscript-node/pull/2)
+
 # 1.3.1 (2022-01-24)
 
 - fix handling of rotated PDFs
