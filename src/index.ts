@@ -91,10 +91,29 @@ export async function countPDFPages(pdfBuffer: Buffer): Promise<number> {
   try {
     return await useTempFilesPDFIn<number>(pdfBuffer, async input => {
       const escapedInput = input.replace(/\\/g, '\\\\');
-      const { stdout } = await exec(
+      let { stdout } = await exec(
         `gs -q -dNOPAUSE -dBATCH -dNOSAFER -dNODISPLAY -c "(${escapedInput}) (r) file runpdfbegin pdfpagecount = quit"`,
       );
-      return parseInt(stdout);
+
+      /**
+       * Necessary for when Ghostscript detects a damaged but repairable PDF file, because then it outputs
+       * the following before the number of pages (three spaces before each line starting with "****"):
+       *
+       *    **** Error:  An error occurred while reading an XREF table.
+       *    **** The file has been damaged.  This may have been caused
+       *    **** by a problem while converting or transfering the file.
+       *    **** Ghostscript will attempt to recover the data.
+       *    **** However, the output may be incorrect.
+       */
+      stdout = stdout
+        .split('\n')
+        .filter(l => !l.startsWith('   **** ') && l.length > 0)
+        .join('\n')
+        .trim();
+
+      const ret = parseInt(stdout);
+      if (isNaN(ret)) throw new Error('parsing failed: ' + stdout);
+      return ret;
     });
   } catch (e: any) {
     throw new Error('Failed to determine number of pages in PDF: ' + e.message);
