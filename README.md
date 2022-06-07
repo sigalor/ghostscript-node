@@ -1,6 +1,6 @@
 # ghostscript-node
 
-[![GitHub license](https://img.shields.io/github/license/sigalor/ghostscript-node)](https://github.com/sigalor/ghostscript-node/blob/master/LICENSE) [![npm](https://img.shields.io/npm/v/ghostscript-node)](https://www.npmjs.com/package/ghostscript-node)
+[![GitHub license](https://img.shields.io/github/license/sigalor/ghostscript-node)](https://github.com/sigalor/ghostscript-node/blob/master/LICENSE) [![npm](https://img.shields.io/npm/v/ghostscript-node)](https://www.npmjs.com/package/ghostscript-node) [![Unit tests workflow status](https://github.com/sigalor/ghostscript-node/actions/workflows/tests.yaml/badge.svg)](https://github.com/sigalor/ghostscript-node/actions/workflows/tests.yaml)
 
 ## Introduction
 
