@@ -49,3 +49,7 @@ const gs = require("ghostscript-node");
   const isPDF1Valid = await gs.isValidPDF(pdf1);
 })();
 ```
+
+## License
+
+MIT
