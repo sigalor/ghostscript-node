@@ -8,7 +8,11 @@ A fully promise-based Node.js library which can work with PDFs, based on Ghostsc
 
 All PDF files that are handled by this library in the form of `Buffer` objects, i.e. to a user of this library, it looks like everything works only in memory. In the background though, file system access (via [tempy](https://www.npmjs.com/package/tempy)) is needed.
 
-Additionally, this library requires the `gs` command (Ghostscript) as well as `qpdf` to be available.
+Additionally, this library requires the `gs` command (Ghostscript) as well as `qpdf` to be available. The required apt dependencies on Ubuntu 20.04 can be installed via the following command:
+
+```
+sudo apt install -y python python3 build-essential ghostscript libjpeg-dev libpng-dev libcurl4-openssl-dev mupdf-tools libfreetype6-dev qpdf
+```
 
 ## Getting started
 
