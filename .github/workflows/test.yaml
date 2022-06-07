@@ -1,0 +1,23 @@
+name: CI
+on: pull_request
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the Repo
+      - uses: actions/checkout@v2
+
+      # Install Node 16
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+
+      # Install APT dependencies
+      - run: sudo apt update && sudo apt install -y python python3 build-essential ghostscript libjpeg-dev libpng-dev libcurl4-openssl-dev mupdf-tools libfreetype6-dev qpdf
+
+      # Install NPM dependencies
+      - run: npm install
+
+      # Run tests
+      - run: npm test
