@@ -1,3 +1,8 @@
+# 1.4.0 (2022-06-07)
+
+- transformed entire library to use TypeScript
+- fix `countPDFPages` to ignore Ghostscript warnings (e.g. due to a damaged XREF table)
+
 # 1.3.2 (2022-02-16)
 
 - escape input in countPDFPages for Windows, fix redundant await (Loupi) [#2](https://github.com/sigalor/ghostscript-node/pull/2)
