@@ -1,15 +1,31 @@
-const childProcess = require('child_process');
-const fs = require('fs-extra');
-const tempy = require('tempy');
-const util = require('util');
+import childProcess from 'child_process';
+import fs from 'fs-extra';
+import tempy, { FileOptions } from 'tempy';
+import util from 'util';
+
 const exec = util.promisify(childProcess.exec);
 
-async function useTempFiles(filenameSets, fn) {
-  const filenames = {};
+interface TempFilenameSetDefs {
+  [setName: string]: {
+    writeBuffers?: Buffer[];
+    numFiles?: number;
+    tempyConfig?: FileOptions;
+  };
+}
+
+type TempFilenameSets = {
+  [setName: string]: string[];
+};
+
+type TempFileFnSingle<T> = (input: string, output?: string) => Promise<T>;
+type TempFileFnMany<T> = (filenames: TempFilenameSets) => Promise<T>;
+
+async function useTempFiles<T>(filenameSets: TempFilenameSetDefs, fn: TempFileFnMany<T>) {
+  const filenames: TempFilenameSets = {};
 
   // create all desired temporary files (either empty files or write data buffers to them)
   for (const [k, config] of Object.entries(filenameSets)) {
-    const { numFiles, writeBuffers, ...tempyConfig } = config;
+    const { numFiles, writeBuffers, tempyConfig } = config;
 
     if (numFiles !== undefined) {
       filenames[k] = Array(numFiles)
@@ -24,19 +40,19 @@ async function useTempFiles(filenameSets, fn) {
   const ret = await fn(filenames);
 
   // remove all the temporary files again
-  await Promise.all([].concat(...Object.values(filenames)).map(f => fs.unlink(f)));
+  await Promise.all([].concat(...(<any>Object.values(filenames))).map(f => fs.unlink(f)));
 
   // return the result of the worker function
   return ret;
 }
 
-async function useTempFilesPDF(filenameSets, fn) {
-  Object.values(filenameSets).forEach(v => (v.extension = '.pdf'));
+async function useTempFilesPDF<T>(filenameSets: TempFilenameSetDefs, fn: TempFileFnMany<T>) {
+  Object.values(filenameSets).forEach(v => (v.tempyConfig = { extension: '.pdf' }));
   return useTempFiles(filenameSets, fn);
 }
 
-// writes inputBuffer to one temporary file, creates an empty output file and eventually returns output
-async function useTempFilesPDFInOut(inputBuffer, fn) {
+// writes inputBuffer to one temporary file, creates an empty output file, calls the worker function and returns the output file contents as Buffer
+async function useTempFilesPDFInOut(inputBuffer: Buffer, fn: TempFileFnSingle<void>): Promise<Buffer> {
   return useTempFilesPDF(
     { input: { writeBuffers: [inputBuffer] }, output: { numFiles: 1 } },
     async ({ input, output }) => {
@@ -46,11 +62,11 @@ async function useTempFilesPDFInOut(inputBuffer, fn) {
   );
 }
 
-async function useTempFilesPDFIn(inputBuffer, fn) {
+async function useTempFilesPDFIn<T>(inputBuffer: Buffer, fn: TempFileFnSingle<T>): Promise<T> {
   return useTempFilesPDF({ input: { writeBuffers: [inputBuffer] } }, async ({ input }) => fn(input[0]));
 }
 
-async function combinePDFs(pdfBuffers) {
+export async function combinePDFs(pdfBuffers: Buffer[]): Promise<Buffer> {
   if (pdfBuffers.length === 0) return Buffer.alloc(0);
   if (pdfBuffers.length === 1) return pdfBuffers[0];
 
@@ -66,45 +82,45 @@ async function combinePDFs(pdfBuffers) {
         return fs.readFile(output[0]);
       },
     );
-  } catch (e) {
+  } catch (e: any) {
     throw new Error('Failed to combine PDFs: ' + e.message);
   }
 }
 
-async function countPDFPages(pdfBuffer) {
+export async function countPDFPages(pdfBuffer: Buffer): Promise<number> {
   try {
-    return await useTempFilesPDFIn(pdfBuffer, async input => {
-      const escapedInput = input.replace(/\\/g, '\\\\')
+    return await useTempFilesPDFIn<number>(pdfBuffer, async input => {
+      const escapedInput = input.replace(/\\/g, '\\\\');
       const { stdout } = await exec(
         `gs -q -dNOPAUSE -dBATCH -dNOSAFER -dNODISPLAY -c "(${escapedInput}) (r) file runpdfbegin pdfpagecount = quit"`,
       );
       return parseInt(stdout);
     });
-  } catch (e) {
+  } catch (e: any) {
     throw new Error('Failed to determine number of pages in PDF: ' + e.message);
   }
 }
 
-async function extractPDFPages(pdfBuffer, firstPage, lastPage) {
+export async function extractPDFPages(pdfBuffer: Buffer, firstPage: number, lastPage: number): Promise<Buffer> {
   try {
     return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
       await exec(
         `gs -q -dNOPAUSE -sDEVICE=pdfwrite -dBATCH -dNOSAFER -dFirstPage=${firstPage} -dLastPage=${lastPage} -dAutoRotatePages=/None -sOutputFile=${output} ${input}`,
       );
     });
-  } catch (e) {
+  } catch (e: any) {
     throw new Error('Failed to extract PDF pages: ' + e.message);
   }
 }
 
-async function rotatePDF(pdfBuffer, direction) {
+export async function rotatePDF(pdfBuffer: Buffer, direction: '90' | '180' | '270'): Promise<Buffer> {
   if (!['90', '180', '270'].includes(direction)) throw new Error('Invalid rotation direction: ' + direction);
 
   try {
     return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
       await exec(`qpdf ${input} ${output} --rotate=${direction}`);
     });
-  } catch (e) {
+  } catch (e: any) {
     throw new Error('Failed to rotate PDF: ' + e.message);
   }
 }
@@ -115,7 +131,12 @@ async function rotatePDF(pdfBuffer, direction) {
  * If `firstPage` is negative (e.g. -n), this refers to the last n pages and `lastPage` must be undefined.
  * All page numbers start at 1.
  */
-async function renderPDFPagesToPNG(pdfBuffer, firstPage, lastPage, resolution = 300) {
+export async function renderPDFPagesToPNG(
+  pdfBuffer: Buffer,
+  firstPage?: number,
+  lastPage?: number,
+  resolution = 300,
+): Promise<Buffer[]> {
   const numPages = await countPDFPages(pdfBuffer);
 
   if (firstPage === undefined) firstPage = 1;
@@ -131,7 +152,7 @@ async function renderPDFPagesToPNG(pdfBuffer, firstPage, lastPage, resolution = 
   if (lastPage === undefined) lastPage = numPages;
   else if (lastPage > numPages) throw new Error('Last page number out of range: ' + lastPage);
 
-  if (firstPage > lastPage) throw new Error('Invalid page range: ' + firstPage + '-' + lastPage);
+  if (firstPage! > lastPage!) throw new Error('Invalid page range: ' + firstPage + '-' + lastPage);
 
   try {
     return await useTempFilesPDFIn(pdfBuffer, async input => {
@@ -141,19 +162,19 @@ async function renderPDFPagesToPNG(pdfBuffer, firstPage, lastPage, resolution = 
       );
 
       const outFiles = [];
-      for (let i = 1; i <= lastPage - firstPage + 1; i++) {
+      for (let i = 1; i <= lastPage! - firstPage! + 1; i++) {
         outFiles.push(await fs.readFile(outDir + '/' + i + '.png'));
       }
 
       await fs.rmdir(outDir, { recursive: true });
       return outFiles;
     });
-  } catch (e) {
+  } catch (e: any) {
     throw new Error('Failed to render PDF pages to PNG: ' + e.message);
   }
 }
 
-async function isValidPDF(pdfBuffer) {
+export async function isValidPDF(pdfBuffer: Buffer): Promise<boolean> {
   try {
     await countPDFPages(pdfBuffer);
     return true;
@@ -161,12 +182,3 @@ async function isValidPDF(pdfBuffer) {
     return false;
   }
 }
-
-module.exports = {
-  combinePDFs,
-  countPDFPages,
-  extractPDFPages,
-  rotatePDF,
-  renderPDFPagesToPNG,
-  isValidPDF,
-};

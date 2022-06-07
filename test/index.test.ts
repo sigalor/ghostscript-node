@@ -1,8 +1,7 @@
-const fs = require('fs-extra');
-const gs = require('..');
-const getFiles = require('./files');
+import * as gs from '../src/index';
+import { FilesMap, getFiles } from './files';
 
-let files;
+let files: FilesMap;
 beforeAll(async () => {
   files = await getFiles();
 });
