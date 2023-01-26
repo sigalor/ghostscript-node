@@ -1,3 +1,7 @@
+# 1.4.1 (2023-01-26)
+
+- updated NPM dependencies
+
 # 1.4.0 (2022-06-07)
 
 - transformed entire library to use TypeScript
