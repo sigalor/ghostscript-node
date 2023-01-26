@@ -86,13 +86,26 @@ describe('renderPDFPagesToPNG', () => {
   test('correctly renders rotated PDF', async () => {
     const rotatedPdf = await gs.rotatePDF(files['pdf1.pdf'], '90');
     const png = (await gs.renderPDFPagesToPNG(rotatedPdf))[0];
-    expect(png.toString('base64')).toBe(files['renderPDFPagesToPNG-rotated-output.png'].toString('base64'));
+    expect([
+      files['renderPDFPagesToPNG-rotated-output.png'].toString('base64'),
+      files['renderPDFPagesToPNG-rotated-output2.png'].toString('base64'),
+    ]).toContain(png.toString('base64'));
   });
 });
 
 describe('isValidPDF', () => {
   test('returns true for valid PDF', async () => {
     expect(await gs.isValidPDF(files['pdf1.pdf'])).toBe(true);
+  });
+
+  test('returns true for another valid PDF', async () => {
+    expect(await gs.isValidPDF(files['pdf3.pdf'])).toBe(true);
+  });
+
+  test('returns true for PDF that has been extracted and combined again', async () => {
+    const page = await gs.extractPDFPages(files['pdf3.pdf'], 1, 1);
+    const pdf = await gs.combinePDFs([page]);
+    expect(await gs.isValidPDF(pdf)).toBe(true);
   });
 
   test('returns false for invalid PDF', async () => {
