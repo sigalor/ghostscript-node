@@ -18,7 +18,7 @@ jobs:
           node-version: 16
 
       # Install APT dependencies
-      - run: sudo apt update && sudo apt install -y python python3 build-essential ghostscript libjpeg-dev libpng-dev libcurl4-openssl-dev mupdf-tools libfreetype6-dev qpdf
+      - run: sudo apt update && sudo apt install -y python2.7 python3 build-essential ghostscript libjpeg-dev libpng-dev libcurl4-openssl-dev mupdf-tools libfreetype6-dev qpdf
 
       # Install NPM dependencies
       - run: npm install
