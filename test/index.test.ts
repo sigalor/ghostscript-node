@@ -112,3 +112,11 @@ describe('isValidPDF', () => {
     expect(await gs.isValidPDF(Buffer.from([1, 2, 3]))).toBe(false);
   });
 });
+
+
+describe('compressPDF', () => {
+  test('returns PDF reduce size', async () => {
+    const optimizedPDF = await gs.compressPDF(files['pdf3.pdf'])
+    expect(optimizedPDF.length).toBeLessThanOrEqual(files['pdf3.pdf'].length);
+  });
+})
