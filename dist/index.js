@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isValidPDF = exports.renderPDFPagesToPNG = exports.rotatePDF = exports.extractPDFPages = exports.countPDFPages = exports.combinePDFs = void 0;
+exports.compressPDF = exports.isValidPDF = exports.renderPDFPagesToPNG = exports.rotatePDF = exports.extractPDFPages = exports.countPDFPages = exports.combinePDFs = void 0;
 const child_process_1 = __importDefault(require("child_process"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const tempy_1 = __importDefault(require("tempy"));
@@ -166,3 +166,23 @@ async function isValidPDF(pdfBuffer) {
     }
 }
 exports.isValidPDF = isValidPDF;
+/**
+ * This function try, reduce size of your PDF not destroying quality
+ * @param pdfBuffer Buffer
+ * @returns Buffer
+ */
+async function compressPDF(pdfBuffer) {
+    try {
+        const compressedPdf = await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
+            await exec(`gs -q -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dEmbedAllFonts=true -dSubsetFonts=true -dColorImageDownsampleType=/Bicubic -dColorImageResolution=144 -dGrayImageDownsampleType=/Bicubic -dGrayImageResolution=144 -dMonoImageDownsampleType=/Bicubic -dMonoImageResolution=144 -sOutputFile=${output} ${input}`);
+        });
+        if (pdfBuffer.length < compressedPdf.length) {
+            return pdfBuffer;
+        }
+        return compressedPdf;
+    }
+    catch (e) {
+        throw new Error('Failed optimize PDF: ' + e.message);
+    }
+}
+exports.compressPDF = compressPDF;
