@@ -16,4 +16,4 @@ export declare function isValidPDF(pdfBuffer: Buffer): Promise<boolean>;
  * @param pdfBuffer Buffer
  * @returns Buffer
  */
-export declare function compressPDF(pdfBuffer: Buffer): Promise<Buffer>;
+export declare function compressPDF(pdfBuffer: Buffer | string, encoding?: BufferEncoding): Promise<Buffer>;

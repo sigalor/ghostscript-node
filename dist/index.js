@@ -171,8 +171,11 @@ exports.isValidPDF = isValidPDF;
  * @param pdfBuffer Buffer
  * @returns Buffer
  */
-async function compressPDF(pdfBuffer) {
+async function compressPDF(pdfBuffer, encoding) {
     try {
+        if (typeof pdfBuffer === 'string') {
+            pdfBuffer = Buffer.from(pdfBuffer, encoding !== null && encoding !== void 0 ? encoding : 'base64');
+        }
         const compressedPdf = await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
             await exec(`gs -q -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dEmbedAllFonts=true -dSubsetFonts=true -dColorImageDownsampleType=/Bicubic -dColorImageResolution=144 -dGrayImageDownsampleType=/Bicubic -dGrayImageResolution=144 -dMonoImageDownsampleType=/Bicubic -dMonoImageResolution=144 -sOutputFile=${output} ${input}`);
         });
