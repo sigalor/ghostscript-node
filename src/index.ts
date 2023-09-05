@@ -144,6 +144,14 @@ export async function rotatePDF(pdfBuffer: Buffer, direction: '90' | '180' | '27
   }
 }
 
+/**
+ * Converts a PDF to PDF/A.
+ * 
+ * @param pdfBuffer - Buffer of the PDF to convert
+ * @param options - Options for the conversion
+ * @param options.version - PDF/A version to convert to. Defaults to 1.
+ * @returns 
+ */
 export async function convertToPDFA(
   pdfBuffer: Buffer,
   options = {
