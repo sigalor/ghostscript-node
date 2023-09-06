@@ -145,6 +145,31 @@ export async function rotatePDF(pdfBuffer: Buffer, direction: '90' | '180' | '27
 }
 
 /**
+ * Converts a PDF to PDF/A.
+ * 
+ * @param pdfBuffer - Buffer of the PDF to convert
+ * @param options - Options for the conversion
+ * @param options.version - PDF/A version to convert to. Defaults to 1.
+ * @returns 
+ */
+export async function convertToPDFA(
+  pdfBuffer: Buffer,
+  options = {
+    version: 1,
+  },
+): Promise<Buffer> {
+  try {
+    return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
+      await exec(
+        `gs -dPDFA -dBATCH -dNOPAUSE -sColorConversionStrategy=UseDeviceIndependentColor -sDEVICE=pdfwrite -dPDFACompatibilityPolicy=${options.version} -sOutputFile=${output} ${input}`,
+      );
+    });
+  } catch (e: any) {
+    throw new Error('Failed to convert PDF to PDF/A: ' + e.message);
+  }
+}
+
+/**
  * If `firstPage` is not given, 1 is used.
  * If `lastPage` is not given, the document's last page is used.
  * If `firstPage` is negative (e.g. -n), this refers to the last n pages and `lastPage` must be undefined.
