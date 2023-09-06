@@ -40,6 +40,13 @@ describe('rotatePDF', () => {
   });
 });
 
+describe('convertToPDFA', () => {
+  test('works', async () => {
+    const res = await gs.convertToPDFA(files['pdf2.pdf']);
+    await expect(gs.countPDFPages(res)).resolves.toBe(3);
+  });
+});
+
 describe('renderPDFPagesToPNG', () => {
   test('works for single page PDF', async () => {
     const res = await gs.renderPDFPagesToPNG(files['pdf1.pdf']);

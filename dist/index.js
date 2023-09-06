@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.compressPDF = exports.isValidPDF = exports.renderPDFPagesToPNG = exports.rotatePDF = exports.extractPDFPages = exports.countPDFPages = exports.combinePDFs = void 0;
+exports.compressPDF = exports.isValidPDF = exports.renderPDFPagesToPNG = exports.convertToPDFA = exports.rotatePDF = exports.extractPDFPages = exports.countPDFPages = exports.combinePDFs = void 0;
 const child_process_1 = __importDefault(require("child_process"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const tempy_1 = __importDefault(require("tempy"));
@@ -115,6 +115,27 @@ async function rotatePDF(pdfBuffer, direction) {
     }
 }
 exports.rotatePDF = rotatePDF;
+/**
+ * Converts a PDF to PDF/A.
+ *
+ * @param pdfBuffer - Buffer of the PDF to convert
+ * @param options - Options for the conversion
+ * @param options.version - PDF/A version to convert to. Defaults to 1.
+ * @returns
+ */
+async function convertToPDFA(pdfBuffer, options = {
+    version: 1,
+}) {
+    try {
+        return await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
+            await exec(`gs -dPDFA -dBATCH -dNOPAUSE -sColorConversionStrategy=UseDeviceIndependentColor -sDEVICE=pdfwrite -dPDFACompatibilityPolicy=${options.version} -sOutputFile=${output} ${input}`);
+        });
+    }
+    catch (e) {
+        throw new Error('Failed to convert PDF to PDF/A: ' + e.message);
+    }
+}
+exports.convertToPDFA = convertToPDFA;
 /**
  * If `firstPage` is not given, 1 is used.
  * If `lastPage` is not given, the document's last page is used.
