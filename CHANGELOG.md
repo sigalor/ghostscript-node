@@ -1,3 +1,8 @@
+# 1.5.0 (2023-09-06)
+
+- add `compressPDF` (gabolera) [#4](https://github.com/sigalor/ghostscript-node/pull/4)
+- add `convertToPDFA` (MedAzizKhayati) [#6](https://github.com/sigalor/ghostscript-node/pull/6)
+
 # 1.4.1 (2023-01-26)
 
 - updated NPM dependencies
