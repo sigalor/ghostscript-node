@@ -11,3 +11,9 @@ export declare function rotatePDF(pdfBuffer: Buffer, direction: '90' | '180' | '
  */
 export declare function renderPDFPagesToPNG(pdfBuffer: Buffer, firstPage?: number, lastPage?: number, resolution?: number): Promise<Buffer[]>;
 export declare function isValidPDF(pdfBuffer: Buffer): Promise<boolean>;
+/**
+ * This function try, reduce size of your PDF not destroying quality
+ * @param pdfBuffer Buffer
+ * @returns Buffer
+ */
+export declare function compressPDF(pdfBuffer: Buffer | string, encoding?: BufferEncoding): Promise<Buffer>;

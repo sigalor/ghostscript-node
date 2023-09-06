@@ -201,3 +201,27 @@ export async function isValidPDF(pdfBuffer: Buffer): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * This function try, reduce size of your PDF not destroying quality
+ * @param pdfBuffer Buffer
+ * @returns Buffer
+ */
+export async function compressPDF(pdfBuffer: Buffer | string, encoding?: BufferEncoding): Promise<Buffer> {
+  try {
+    if(typeof pdfBuffer === 'string'){
+      pdfBuffer = Buffer.from(pdfBuffer, encoding ?? 'base64')
+    }
+    const compressedPdf = await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
+      await exec(
+        `gs -q -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dEmbedAllFonts=true -dSubsetFonts=true -dColorImageDownsampleType=/Bicubic -dColorImageResolution=144 -dGrayImageDownsampleType=/Bicubic -dGrayImageResolution=144 -dMonoImageDownsampleType=/Bicubic -dMonoImageResolution=144 -sOutputFile=${output} ${input}`,
+      );
+    });
+    if (pdfBuffer.length < compressedPdf.length) {
+      return pdfBuffer;
+    }
+    return compressedPdf;
+  } catch (e: any) {
+    throw new Error('Failed optimize PDF: ' + e.message);
+  }
+}
