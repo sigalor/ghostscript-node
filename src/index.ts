@@ -146,11 +146,11 @@ export async function rotatePDF(pdfBuffer: Buffer, direction: '90' | '180' | '27
 
 /**
  * Converts a PDF to PDF/A.
- * 
+ *
  * @param pdfBuffer - Buffer of the PDF to convert
  * @param options - Options for the conversion
  * @param options.version - PDF/A version to convert to. Defaults to 1.
- * @returns 
+ * @returns
  */
 export async function convertToPDFA(
   pdfBuffer: Buffer,
@@ -210,7 +210,7 @@ export async function renderPDFPagesToPNG(
         outFiles.push(await fs.readFile(outDir + '/' + i + '.png'));
       }
 
-      await fs.rmdir(outDir, { recursive: true });
+      await fs.rm(outDir, { recursive: true });
       return outFiles;
     });
   } catch (e: any) {
@@ -234,8 +234,8 @@ export async function isValidPDF(pdfBuffer: Buffer): Promise<boolean> {
  */
 export async function compressPDF(pdfBuffer: Buffer | string, encoding?: BufferEncoding): Promise<Buffer> {
   try {
-    if(typeof pdfBuffer === 'string'){
-      pdfBuffer = Buffer.from(pdfBuffer, encoding ?? 'base64')
+    if (typeof pdfBuffer === 'string') {
+      pdfBuffer = Buffer.from(pdfBuffer, encoding ?? 'base64');
     }
     const compressedPdf = await useTempFilesPDFInOut(pdfBuffer, async (input, output) => {
       await exec(
